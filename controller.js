@@ -16,6 +16,22 @@ const audioBasePath = path.resolve(process.env.AUDIO_PATH || "audio");
 const atnaujinti = asyncHandler(async (req, res) => {
   var item = transformInput(req.body);
   try {
+    if(item.data == null) {
+      // reikia gauti datą iš failo modifikavimo datos
+      const record = await queries.gautiIrasaPagalId(req.params.id);
+      if (record) {
+        const filePath = path.join(audioBasePath, record.failo_pavadinimas);
+        try {
+          const stats = await fs.stat(filePath);
+          item.data = stats.mtime;
+        } catch (error) {
+          logger.error(error);
+          item.data = null;
+        }
+      } else {
+        item.data = null;
+      }
+    }
     await queries.atnaujintiIrasa(req.params.id, item);
     logger.info(`Įrašas atnaujintas: ${req.params.id}`);
     res.status(200).send({ message: "Įrašas atnaujintas" });
@@ -32,6 +48,7 @@ const transformInput = (body) => {
   var item = {};
   item.aprasymas = body.aprasymas;
   item.data = body.data ? new Date(body.data) : null;
+  item.failo_data = body.failo_data ? new Date(body.failo_data) : null;
   item.giesme = body.giesme ? parseInt(body.giesme) : null;
   item.knyga = body.knyga;
   item.metai = body.metai ? parseInt(body.metai) : null;
@@ -79,8 +96,9 @@ const gautiViena = asyncHandler(async (req, res) => {
     }
 
     logger.info(`Gautas įrašas: ${req.params.id}`);
-    var dataString = record.data ? record.data.toLocaleDateString() : null;
-    res.status(200).json({ ...record, dataString: dataString });
+    var dataString = record.data ? toLocalIsoString(record.data).slice(0, 10) : null;
+    var failo_dataString = record.failo_data ? toLocalIsoString(record.failo_data).slice(0, 10) : null; 
+    res.status(200).json({ ...record, data: dataString, failo_data: failo_dataString });
   } catch (error) {
     logger.error(error);
     return res.status(400).send(error);
@@ -296,6 +314,32 @@ const sukurti = asyncHandler(async (req, res) => {
     return res.status(400).send(error);
   }
 });
+
+const toLocalIsoString = (date) => {
+  const tzo = -date.getTimezoneOffset(),
+    dif = tzo >= 0 ? "+" : "-",
+    pad = function (num) {
+      return (num < 10 ? "0" : "") + num;
+    };
+
+  return (
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate()) +
+    "T" +
+    pad(date.getHours()) +
+    ":" +
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds()) +
+    dif +
+    pad(Math.floor(Math.abs(tzo) / 60)) +
+    ":" +
+    pad(Math.abs(tzo) % 60)
+  );
+};
 
 module.exports = {
   atnaujinti,

@@ -21,10 +21,10 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}\\server.js"
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/server.js",
+            "envFile": "${workspaceFolder}/.env",
+            "runtimeArgs": ["--enable-source-maps"]
         }
     ]
 }

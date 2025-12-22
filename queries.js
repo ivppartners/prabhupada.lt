@@ -12,7 +12,7 @@ const pool = new Pool({
 
 async function gautiVisusIrasus() {
   const { rows } = await pool.query(
-    "SELECT * FROM records order by failo_data desc;"
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records order by failo_data desc;"
   );
   return rows;
 }
