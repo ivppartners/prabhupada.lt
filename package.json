@@ -1,0 +1,34 @@
+{
+  "name": "prabhupada.lt",
+  "version": "1.0.0",
+  "description": "Prabhupados paskaitos online",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "prabhupada.lt"
+  },
+  "keywords": [
+    "prabhupada",
+    "iskcon"
+  ],
+  "author": "Satakula Das",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-async-handler": "^1.2.0",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
