@@ -164,6 +164,21 @@ server {
     # Padidiname upload limitą, nes keliate MP3 failus
     client_max_body_size 500M;
 
+    # Saugumas: blokuojame jautrius endpointus iš išorės
+    location /api/naikintiViska {
+        allow 127.0.0.1;      # Leisti tik iš paties serverio
+        allow 192.168.0.0/16; # Leisti iš vidinio tinklo (pakeiskite pagal savo tinklą)
+        deny all;             # Visiems kitiems - 403 Forbidden
+
+        # Būtina pakartoti proxy nustatymus, nes location blokai nepaveldi jų automatiškai
+        proxy_pass http://localhost:4001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
     location / {
         proxy_pass http://localhost:4001;
         proxy_http_version 1.1;
