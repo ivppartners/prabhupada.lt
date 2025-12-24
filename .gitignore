@@ -11,3 +11,6 @@ dist/
 *.swp
 thumbs.db
 audio
+logs/
+logs/.24815ec0c01ead7f0e935bd7dce729a38b58f2b5-audit.json
+logs/.b1046fb9b3bc595e48c22aeaf9118cd886c61284-audit.json

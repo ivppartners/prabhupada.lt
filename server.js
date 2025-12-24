@@ -8,7 +8,7 @@ const port = 4001;
 const app = express();
 
 var corsOptions = {
-  origin: ['http://localhost:3300', 'http://localhost:3301', 'http://prabhupada.lt', 'https://prabhupada.lt'],
+  origin: ['http://localhost:3300', 'http://localhost:3301', 'http://localhost:5173', 'http://prabhupada.lt', 'https://prabhupada.lt'],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
