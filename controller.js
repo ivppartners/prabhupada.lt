@@ -128,6 +128,11 @@ const groti = asyncHandler(async (req, res) => {
       return res.status(400).send({ message: "Neteisingas failo formatas!" });
     }
 
+    // reikia išsaugoti logo lentelėje įrašą apie atidarytą grojimui failą.
+
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    await queries.irasytiLogoIrasa(record.id, ip);
+
     var range = req.headers.range;
 
     if (range) {

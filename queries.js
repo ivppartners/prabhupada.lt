@@ -32,6 +32,13 @@ async function gautiIrasaPagalFailoPavadinima(failoPavadinimas) {
   return rows[0] || null;
 }
 
+async function irasytiLogoIrasa(recordId, ip) {
+  return pool.query(
+    "INSERT INTO log (record_id, timestamp, ip) VALUES ($1, NOW(), $2);",
+    [recordId, ip]
+  );
+}
+
 async function iterptiIrasa(record) {
   return pool.query(
     "INSERT INTO records (id, pavadinimas, failo_pavadinimas, failo_data, data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);",
@@ -83,6 +90,7 @@ module.exports = {
   gautiVisusIrasus,
   gautiIrasaPagalId,
   gautiIrasaPagalFailoPavadinima,
+  irasytiLogoIrasa,
   iterptiIrasa,
   atnaujintiIrasa,
   istrintiIrasa,
