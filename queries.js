@@ -34,7 +34,7 @@ async function gautiIrasaPagalFailoPavadinima(failoPavadinimas) {
 
 async function irasytiLogoIrasa(recordId, ip) {
   return pool.query(
-    "INSERT INTO log (record_id, timestamp, ip) VALUES ($1, NOW(), $2);",
+    "INSERT INTO logs (record_id, timestamp, ip) VALUES ($1, NOW(), $2);",
     [recordId, ip]
   );
 }
