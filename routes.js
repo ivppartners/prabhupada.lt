@@ -1,6 +1,6 @@
 const express = require('express');
 const upload = require('./upload');
-const { atnaujinti, atsisiusti, gauti, gautiViena, groti, ikelti, importuoti, naikinti, sukurti, parse, parseFilename, naikintiViska } = require('./controller.js');
+const { atnaujinti, atsisiusti, gauti, gautiViena, groti, ikelti, importuoti, getKrishnaBookAllChapters, naikinti, sukurti, parse, parseFilename, naikintiViska } = require('./controller.js');
 
 const router = express.Router();
 router.route('/create').post(sukurti)
@@ -9,6 +9,7 @@ router.route('/delete').delete(naikintiViska)
 router.route('/download/:id').get(atsisiusti)
 router.route('/get/:id').get(gautiViena)
 router.route('/get').get(gauti)
+router.route('/krishna').get(getKrishnaBookAllChapters)
 router.route('/import').get(importuoti)
 router.route('/parse/:id').get(parse)
 router.route('/parseFilename').post(parseFilename)

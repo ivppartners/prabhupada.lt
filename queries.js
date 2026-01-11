@@ -12,7 +12,14 @@ const pool = new Pool({
 
 async function gautiVisusIrasus() {
   const { rows } = await pool.query(
-    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records order by failo_data desc;"
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where data is not null order by failo_data desc;"
+  );
+  return rows;
+}
+
+async function getKrishnaBookAllChapters() {
+  const { rows } = await pool.query(
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where knyga = 'Krishna' and data is null order by skyrius;"
   );
   return rows;
 }
@@ -90,6 +97,7 @@ module.exports = {
   gautiVisusIrasus,
   gautiIrasaPagalId,
   gautiIrasaPagalFailoPavadinima,
+  getKrishnaBookAllChapters,
   irasytiLogoIrasa,
   iterptiIrasa,
   atnaujintiIrasa,

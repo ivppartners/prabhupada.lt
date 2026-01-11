@@ -16,7 +16,7 @@ const audioBasePath = path.resolve(process.env.AUDIO_PATH || "audio");
 const atnaujinti = asyncHandler(async (req, res) => {
   var item = transformInput(req.body);
   try {
-    if(item.data == null) {
+    if (item.data == null) {
       // reikia gauti datą iš failo modifikavimo datos
       const record = await queries.gautiIrasaPagalId(req.params.id);
       if (record) {
@@ -87,6 +87,17 @@ const gauti = asyncHandler(async (req, res) => {
   }
 });
 
+const getKrishnaBookAllChapters = asyncHandler(async (req, res) => {
+  try {
+    const rows = await queries.getKrishnaBookAllChapters();
+    logger.info("Gauti visi įrašai");
+    res.status(200).json(rows);
+  } catch (error) {
+    logger.error(error);
+    return res.status(400).send(error);
+  }
+});
+
 const gautiViena = asyncHandler(async (req, res) => {
   try {
     const record = await queries.gautiIrasaPagalId(req.params.id);
@@ -97,7 +108,7 @@ const gautiViena = asyncHandler(async (req, res) => {
 
     logger.info(`Gautas įrašas: ${req.params.id}`);
     var dataString = record.data ? toLocalIsoString(record.data).slice(0, 10) : null;
-    var failo_dataString = record.failo_data ? toLocalIsoString(record.failo_data).slice(0, 10) : null; 
+    var failo_dataString = record.failo_data ? toLocalIsoString(record.failo_data).slice(0, 10) : null;
     res.status(200).json({ ...record, data: dataString, failo_data: failo_dataString });
   } catch (error) {
     logger.error(error);
@@ -351,6 +362,7 @@ module.exports = {
   atsisiusti,
   gauti,
   gautiViena,
+  getKrishnaBookAllChapters,
   groti,
   ikelti,
   importuoti,
