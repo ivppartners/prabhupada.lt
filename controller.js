@@ -305,14 +305,15 @@ const sukurti = asyncHandler(async (req, res) => {
     return res.status(400).send({ message: "Įkelkite failą" });
   }
 
+
   try {
     const id = randomUUID();
     await queries.iterptiIrasa({
       id,
       pavadinimas: req.body.pavadinimas,
       failo_pavadinimas: req.body.failo_pavadinimas,
-      failo_data: req.body.failo_data,
-      data: req.body.data,
+      failo_data: req.body.failo_data ? new Date(req.body.failo_data) : new Date(),
+      data: req.body.data ? new Date(req.body.data) : null,
       metai: req.body.metai,
       vieta: req.body.vieta,
       knyga: req.body.knyga,

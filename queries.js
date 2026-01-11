@@ -19,7 +19,7 @@ async function gautiVisusIrasus() {
 
 async function getKrishnaBookAllChapters() {
   const { rows } = await pool.query(
-    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where knyga = 'Krishna' and data is null order by skyrius;"
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where knyga = 'Krishna' and data is null order by pavadinimas;"
   );
   return rows;
 }
