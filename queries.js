@@ -19,7 +19,7 @@ async function gautiVisusIrasus() {
 
 async function gautiPublikuotusIrasus() {
   const { rows } = await pool.query(
-    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where data is not null and publikuotas = true order by failo_data desc;"
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where data is not null and published = true order by failo_data desc;"
   );
   return rows;
 }
@@ -27,6 +27,13 @@ async function gautiPublikuotusIrasus() {
 async function getKrishnaBookAllChapters() {
   const { rows } = await pool.query(
     "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where knyga = 'Krishna' and data is null order by pavadinimas;"
+  );
+  return rows;
+}
+
+async function getPrabhupadaBookAllChapters() {
+  const { rows } = await pool.query(
+    "SELECT id, pavadinimas, failo_pavadinimas, to_char(failo_data, 'YYYY-MM-DD') as failo_data, to_char(data, 'YYYY-MM-DD') as data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis FROM records where knyga = 'Prabhupada' and data is null order by pavadinimas;"
   );
   return rows;
 }
@@ -104,9 +111,11 @@ async function istrintiVisusIrasus() {
 
 module.exports = {
   gautiVisusIrasus,
+  gautiPublikuotusIrasus,
   gautiIrasaPagalId,
   gautiIrasaPagalFailoPavadinima,
   getKrishnaBookAllChapters,
+  getPrabhupadaBookAllChapters,
   irasytiLogoIrasa,
   iterptiIrasa,
   atnaujintiIrasa,
