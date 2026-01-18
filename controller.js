@@ -87,6 +87,17 @@ const gauti = asyncHandler(async (req, res) => {
   }
 });
 
+const gautiPublikuotus = asyncHandler(async (req, res) => {
+  try {
+    const rows = await queries.gautiPublikuotusIrasus();
+    logger.info("Gauti visi įrašai");
+    res.status(200).json(rows);
+  } catch (error) {
+    logger.error(error);
+    return res.status(400).send(error);
+  }
+});
+
 const getKrishnaBookAllChapters = asyncHandler(async (req, res) => {
   try {
     const rows = await queries.getKrishnaBookAllChapters();
@@ -362,6 +373,7 @@ module.exports = {
   atnaujinti,
   atsisiusti,
   gauti,
+  gautiPublikuotus,
   gautiViena,
   getKrishnaBookAllChapters,
   groti,
