@@ -53,6 +53,7 @@ const transformInput = (body) => {
   item.knyga = body.knyga;
   item.metai = body.metai ? parseInt(body.metai) : null;
   item.pavadinimas = body.pavadinimas;
+  item.published = body.published;
   item.skyrius = body.skyrius ? parseInt(body.skyrius) : null;
   item.tekstas = body.tekstas ? parseInt(body.tekstas) : null;
   item.vieta = body.vieta;
@@ -333,6 +334,7 @@ const sukurti = asyncHandler(async (req, res) => {
       tekstas: req.body.tekstas,
       aprasymas: req.body.aprasymas,
       dydis: req.body.dydis,
+      published: req.body.published || false,
     });
 
     logger.info(`Įrašas sukurtas: ${id}`);

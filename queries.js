@@ -55,7 +55,7 @@ async function irasytiLogoIrasa(recordId, ip) {
 
 async function iterptiIrasa(record) {
   return pool.query(
-    "INSERT INTO records (id, pavadinimas, failo_pavadinimas, failo_data, data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);",
+    "INSERT INTO records (id, pavadinimas, failo_pavadinimas, failo_data, data, metai, vieta, knyga, giesme, skyrius, tekstas, aprasymas, dydis, published) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);",
     [
       record.id,
       record.pavadinimas,
@@ -70,13 +70,14 @@ async function iterptiIrasa(record) {
       record.tekstas,
       record.aprasymas,
       record.dydis,
+      record.published || false,
     ]
   );
 }
 
 async function atnaujintiIrasa(id, item) {
   return pool.query(
-    "UPDATE records SET aprasymas = $1, data = $2, giesme = $3, knyga = $4, metai = $5, pavadinimas = $6, skyrius = $7, tekstas = $8, vieta = $9 WHERE id = $10;",
+    "UPDATE records SET aprasymas = $1, data = $2, giesme = $3, knyga = $4, metai = $5, pavadinimas = $6, skyrius = $7, tekstas = $8, vieta = $9, published = $10 WHERE id = $11;",
     [
       item.aprasymas,
       item.data,
@@ -87,6 +88,7 @@ async function atnaujintiIrasa(id, item) {
       item.skyrius,
       item.tekstas,
       item.vieta,
+      item.published,
       id,
     ]
   );
