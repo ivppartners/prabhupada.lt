@@ -165,7 +165,7 @@ const groti = asyncHandler(async (req, res) => {
     // reikia išsaugoti logo lentelėje įrašą apie atidarytą grojimui failą.
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    await queries.irasytiLogoIrasa(record.id, ip);
+    queries.irasytiLogoIrasa(record.id, ip).catch(err => logger.error(`Log error: ${err}`));
 
     var range = req.headers.range;
 
@@ -239,25 +239,25 @@ const importuoti = asyncHandler(async (req, res) => {
   const directoryPath = audioBasePath;
   try {
     const files = await fs.readdir(directoryPath);
-    var records = [];
-    for (const file of files) {
-      if (path.extname(file).toLowerCase() !== ".mp3") continue;
+    const existingFilenames = new Set(await queries.gautiVisusFailoPavadinimus());
 
-      // patikrinam, ar nėra tokio įrašo db.
-      const existing = await queries.gautiIrasaPagalFailoPavadinima(file);
-      if (existing) continue;
+    const newFiles = files.filter(file =>
+      path.extname(file).toLowerCase() === ".mp3" && !existingFilenames.has(file)
+    );
 
-      var record = Parser({ originalname: file });
+    const records = await Promise.all(newFiles.map(async (file) => {
+      const record = Parser({ originalname: file });
       record.id = randomUUID();
 
-      var stats = await fs.stat(path.join(directoryPath, file));
+      const stats = await fs.stat(path.join(directoryPath, file));
       record.dydis = stats.size;
       record.failo_data = stats.mtime;
 
       await queries.iterptiIrasa(record);
-      records.push(record);
       logger.info(`Importuotas failas: ${record.failo_pavadinimas}`);
-    }
+      return record;
+    }));
+
     res.status(200).json(records);
   } catch (error) {
     logger.error(error);

@@ -109,6 +109,11 @@ async function istrintiVisusIrasus() {
   return pool.query("DELETE FROM records");
 }
 
+async function gautiVisusFailoPavadinimus() {
+  const { rows } = await pool.query("SELECT failo_pavadinimas FROM records");
+  return rows.map((row) => row.failo_pavadinimas);
+}
+
 module.exports = {
   gautiVisusIrasus,
   gautiPublikuotusIrasus,
@@ -121,4 +126,5 @@ module.exports = {
   atnaujintiIrasa,
   istrintiIrasa,
   istrintiVisusIrasus,
+  gautiVisusFailoPavadinimus,
 };
