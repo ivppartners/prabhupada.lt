@@ -16,22 +16,22 @@ const audioBasePath = path.resolve(process.env.AUDIO_PATH || "audio");
 const atnaujinti = asyncHandler(async (req, res) => {
   var item = transformInput(req.body);
   try {
-    if (item.data == null) {
-      // reikia gauti datą iš failo modifikavimo datos
-      const record = await queries.gautiIrasaPagalId(req.params.id);
-      if (record) {
-        const filePath = path.join(audioBasePath, record.failo_pavadinimas);
-        try {
-          const stats = await fs.stat(filePath);
-          item.data = stats.mtime;
-        } catch (error) {
-          logger.error(error);
-          item.data = null;
-        }
-      } else {
-        item.data = null;
-      }
-    }
+    // if (item.data == null) {
+    //   // reikia gauti datą iš failo modifikavimo datos
+    //   const record = await queries.gautiIrasaPagalId(req.params.id);
+    //   if (record) {
+    //     const filePath = path.join(audioBasePath, record.failo_pavadinimas);
+    //     try {
+    //       const stats = await fs.stat(filePath);
+    //       item.data = stats.mtime;
+    //     } catch (error) {
+    //       logger.error(error);
+    //       item.data = null;
+    //     }
+    //   } else {
+    //     item.data = null;
+    //   }
+    // }
     await queries.atnaujintiIrasa(req.params.id, item);
     logger.info(`Įrašas atnaujintas: ${req.params.id}`);
     res.status(200).send({ message: "Įrašas atnaujintas" });
