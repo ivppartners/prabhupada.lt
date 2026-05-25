@@ -4,8 +4,9 @@ const express = require('express');
 var cors = require('cors')
 const { errorHandler } = require('./errorMiddleware');
 
-const port = 4001;
+const port = process.env.PORT || 4001;
 const app = express();
+
 
 var corsOptions = {
   origin: ['http://localhost:3300', 'http://localhost:5173', 'http://192.168.4.156:3300', 'http://prabhupada.lt', 'https://prabhupada.lt', 'http://prabhupada-admin'],

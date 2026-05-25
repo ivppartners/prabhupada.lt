@@ -1,14 +1,19 @@
 require("dotenv").config();
-
 const Pool = require("pg").Pool;
+const logger = require("./logger");
 
 const pool = new Pool({
   user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
   database: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASSWORD,
-  port: 5432,
+  port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
 });
+
+pool.on("error", (err, client) => {
+  logger.error("Netikėta PostgreSQL klaida nenaudojamam klientui (idle client error):", err);
+});
+
 
 async function gautiVisusIrasus() {
   const { rows } = await pool.query(

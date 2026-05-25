@@ -13,6 +13,17 @@ const queries = require("./queries");
 
 const audioBasePath = path.resolve(process.env.AUDIO_PATH || "audio");
 
+const resolveSafePath = (filename) => {
+  if (!filename) return null;
+  const safeFilename = path.basename(filename);
+  const resolvedPath = path.join(audioBasePath, safeFilename);
+  if (!resolvedPath.startsWith(audioBasePath)) {
+    return null;
+  }
+  return resolvedPath;
+};
+
+
 const atnaujinti = asyncHandler(async (req, res) => {
   var item = transformInput(req.body);
   try {
@@ -66,8 +77,14 @@ const atsisiusti = asyncHandler(async (req, res) => {
     logger.error(`Nerado tokio įrašo: ${req.params.id}`);
     return res.status(400).send("Nerado tokio įrašo");
   }
+
+  const file = resolveSafePath(record.failo_pavadinimas);
+  if (!file) {
+    logger.error(`Neteisingas failo kelias: ${record.failo_pavadinimas}`);
+    return res.status(400).send("Neteisingas failo kelias");
+  }
+
   logger.info(`Atsiunčiamas failas: ${record.failo_pavadinimas}`);
-  const file = path.join(audioBasePath, record.failo_pavadinimas);
   try {
     await fs.access(file);
   } catch (error) {
@@ -76,6 +93,7 @@ const atsisiusti = asyncHandler(async (req, res) => {
   }
   res.download(file);
 });
+
 
 const gauti = asyncHandler(async (req, res) => {
   try {
@@ -146,7 +164,12 @@ const groti = asyncHandler(async (req, res) => {
       logger.error(`Nerado tokio įrašo: ${req.params.id}`);
       return res.status(400).send({ message: "Nerado tokio įrašo" });
     }
-    var filePath = path.join(audioBasePath, record.failo_pavadinimas);
+
+    var filePath = resolveSafePath(record.failo_pavadinimas);
+    if (!filePath) {
+      logger.error(`Neteisingas failo kelias: ${record.failo_pavadinimas}`);
+      return res.status(400).send({ message: "Neteisingas failo kelias" });
+    }
 
     let fileSize;
     try {
@@ -163,7 +186,6 @@ const groti = asyncHandler(async (req, res) => {
     }
 
     // reikia išsaugoti logo lentelėje įrašą apie atidarytą grojimui failą.
-
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     queries.irasytiLogoIrasa(record.id, ip).catch(err => logger.error(`Log error: ${err}`));
 
@@ -184,7 +206,7 @@ const groti = asyncHandler(async (req, res) => {
 
       const safeEnd = Math.min(end, fileSize - 1);
       const chunksize = safeEnd - start + 1;
-      const audioStrem = createReadStream(filePath, { start, end: safeEnd });
+      const audioStream = createReadStream(filePath, { start, end: safeEnd });
       const head = {
         "Content-Range": `bytes ${start}-${safeEnd}/${fileSize}`,
         "Accept-Ranges": "bytes",
@@ -192,14 +214,21 @@ const groti = asyncHandler(async (req, res) => {
         "Content-Type": "audio/mpeg",
       };
       res.writeHead(206, head);
-      audioStrem.pipe(res);
+      audioStream.pipe(res);
+      res.on("close", () => {
+        audioStream.destroy();
+      });
     } else {
       const head = {
         "Content-Length": fileSize,
         "Content-Type": "audio/mpeg",
       };
       res.writeHead(200, head);
-      createReadStream(filePath).pipe(res);
+      const audioStream = createReadStream(filePath);
+      audioStream.pipe(res);
+      res.on("close", () => {
+        audioStream.destroy();
+      });
     }
     logger.info(`Grojamas failas: ${record.failo_pavadinimas}`);
   } catch (error) {
@@ -207,6 +236,7 @@ const groti = asyncHandler(async (req, res) => {
     res.status(400).send({ message: "Klaida grojant failą" });
   }
 });
+
 
 const ikelti = (req, res) => {
   // nuskaitome failo informaciją
