@@ -193,8 +193,16 @@ const groti = asyncHandler(async (req, res) => {
 
     if (range) {
       const parts = String(range).replace(/bytes=/, "").split("-");
-      const start = Number.parseInt(parts[0], 10);
-      const end = parts[1] ? Number.parseInt(parts[1], 10) : fileSize - 1;
+      let start = parts[0] ? Number.parseInt(parts[0], 10) : 0;
+      let end = parts[1] ? Number.parseInt(parts[1], 10) : fileSize - 1;
+
+      if (parts[0] === "" && parts[1]) {
+        const suffixLength = Number.parseInt(parts[1], 10);
+        if (Number.isFinite(suffixLength)) {
+          start = Math.max(0, fileSize - suffixLength);
+          end = fileSize - 1;
+        }
+      }
 
       if (!Number.isFinite(start) || !Number.isFinite(end) || start > end) {
         return res.status(416).send({ message: "Neteisingas Range" });
@@ -220,6 +228,7 @@ const groti = asyncHandler(async (req, res) => {
       });
     } else {
       const head = {
+        "Accept-Ranges": "bytes",
         "Content-Length": fileSize,
         "Content-Type": "audio/mpeg",
       };
