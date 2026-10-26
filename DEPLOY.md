@@ -11,10 +11,10 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git build-essential
 ```
 
-### Įdiekite Node.js (v18 ar naujesnę)
+### Įdiekite Node.js (v22 LTS ar naujesnę)
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
@@ -43,16 +43,9 @@ SQL komandos (pakeiskite slaptažodį!):
 ```sql
 CREATE DATABASE prabhupada;
 CREATE USER prabhupada WITH ENCRYPTED PASSWORD 'jusu_stiprus_slaptazodis';
-GRANT ALL PRIVILEGES ON DATABASE prabhupada TO prabhupada;
-\q
-```
-
-*Pastaba: Jums reikės sukurti lentelę `records`. Naudokite SQL struktūrą iš savo kūrimo aplinkos arba migracijos failų, jei turite.*
-
-Pavyzdinė `records` lentelės struktūra (pagal kodą):
-
-```sql
+GRANT CONNECT ON DATABASE prabhupada TO prabhupada;
 \c prabhupada
+
 CREATE TABLE records (
     id UUID PRIMARY KEY,
     pavadinimas TEXT,
@@ -66,9 +59,21 @@ CREATE TABLE records (
     skyrius INTEGER,
     tekstas INTEGER,
     aprasymas TEXT,
-    dydis BIGINT
+    dydis BIGINT,
+    published BOOLEAN DEFAULT FALSE
 );
-GRANT ALL PRIVILEGES ON TABLE records TO prabhupada;
+
+CREATE TABLE logs (
+    id SERIAL PRIMARY KEY,
+    record_id UUID,
+    timestamp TIMESTAMP DEFAULT NOW(),
+    ip TEXT
+);
+
+-- Minimalių privilegijų principas (Least Privilege): suteikiame tik DML teises
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE records, logs TO prabhupada;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO prabhupada;
+\q
 ```
 
 ## 3. Aplikacijos diegimas
@@ -85,13 +90,14 @@ cd /var/www/prabhupada.lt
 Įdiekite priklausomybes:
 
 ```bash
-npm install --production
+npm install --omit=dev
 ```
 
-Sukonfigūruokite `.env` failą:
+Sukonfigūruokite `.env` failą ir apribojite jo prieigos teises:
 
 ```bash
 cp .env.example .env
+chmod 600 .env
 nano .env
 ```
 
@@ -99,6 +105,8 @@ nano .env
 
 ```env
 AUDIO_PATH="/var/www/prabhupada.lt/audio"
+HOST=127.0.0.1
+PORT=4001
 POSTGRES_USER=prabhupada
 POSTGRES_PASSWORD=jusu_stiprus_slaptazodis
 POSTGRES_DB=prabhupada
@@ -135,69 +143,17 @@ pm2 startup
 
 ## 5. Nginx konfigūracija
 
-Sukurkite naują konfigūracijos failą:
+Paruošti ir saugos atžvilgiu patikrinti Nginx konfigūracijos failai yra kataloge `docs/`:
+- `docs/prabhupada.lt.conf` – viešajam puslapiui `prabhupada.lt` (su administracinių `/api/*` maršrutų blokavimu iš išorinio tinklo).
+- `docs/prabhupada.admin.conf` – administravimo puslapiui `prabhupada.admin` (pasiekiamam tik iš vietinio tinklo `127.0.0.1` ir `192.168.0.0/16`).
+
+Nukopijuokite ir aktyvuokite konfigūracijas:
 
 ```bash
-sudo nano /etc/nginx/sites-available/prabhupada.lt
-```
-
-Įklijuokite konfigūraciją (pakeiskite `server_name` į savo domeną):
-
-```nginx
-# Frontend (React)
-server {
-    listen 80;
-    server_name prabhupada.lt www.prabhupada.lt;
-    root /var/www/prabhupada.lt;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-
-# Backend (API)
-server {
-    listen 80;
-    server_name api.prabhupada.lt; # Jūsų domenas
-
-    # Padidiname upload limitą, nes keliate MP3 failus
-    client_max_body_size 500M;
-
-    # Saugumas: blokuojame jautrius endpointus iš išorės
-    location /api/naikintiViska {
-        allow 127.0.0.1;      # Leisti tik iš paties serverio
-        allow 192.168.0.0/16; # Leisti iš vidinio tinklo (pakeiskite pagal savo tinklą)
-        deny all;             # Visiems kitiems - 403 Forbidden
-
-        # Būtina pakartoti proxy nustatymus, nes location blokai nepaveldi jų automatiškai
-        proxy_pass http://localhost:4001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    location / {
-        proxy_pass http://localhost:4001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        
-        # Perduodame tikrą IP adresą aplikacijai
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-Aktyvuokite konfigūraciją:
-
-```bash
+sudo cp docs/prabhupada.lt.conf /etc/nginx/sites-available/prabhupada.lt
+sudo cp docs/prabhupada.admin.conf /etc/nginx/sites-available/prabhupada.admin
 sudo ln -s /etc/nginx/sites-available/prabhupada.lt /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/prabhupada.admin /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```
@@ -208,10 +164,8 @@ Naudokite Certbot nemokamam SSL sertifikatui:
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.prabhupada.lt
+sudo certbot --nginx -d prabhupada.lt -d www.prabhupada.lt
 ```
-
-Sekite instrukcijas ekrane. Certbot automatiškai atnaujins Nginx konfigūraciją.
 
 ## 7. Priežiūra
 
@@ -220,6 +174,6 @@ Sekite instrukcijas ekrane. Certbot automatiškai atnaujins Nginx konfigūracij�
 - **Atnaujinimas**:
   ```bash
   git pull
-  npm install
+  npm install --omit=dev
   pm2 restart prabhupada-api
   ```

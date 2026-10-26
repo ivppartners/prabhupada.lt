@@ -8,6 +8,7 @@ const pool = new Pool({
   database: process.env.POSTGRES_DB,
   password: process.env.POSTGRES_PASSWORD,
   port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+  ssl: process.env.POSTGRES_SSL === "true" ? { rejectUnauthorized: true } : false,
 });
 
 pool.on("error", (err, client) => {
@@ -110,10 +111,6 @@ async function istrintiIrasa(id) {
   return pool.query("DELETE FROM records WHERE id = $1", [id]);
 }
 
-async function istrintiVisusIrasus() {
-  return pool.query("DELETE FROM records");
-}
-
 async function gautiVisusFailoPavadinimus() {
   const { rows } = await pool.query("SELECT failo_pavadinimas FROM records");
   return rows.map((row) => row.failo_pavadinimas);
@@ -130,6 +127,5 @@ module.exports = {
   iterptiIrasa,
   atnaujintiIrasa,
   istrintiIrasa,
-  istrintiVisusIrasus,
   gautiVisusFailoPavadinimus,
 };

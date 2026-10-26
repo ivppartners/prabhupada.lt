@@ -52,6 +52,11 @@ const upload = multer({
     if (!isMp3Ext || !isMp3Mime) {
       return cb(new Error("Leidžiami tik MP3 failai."));
     }
+    const safeName = sanitizeFilename(file.originalname);
+    const targetPath = path.join(audioPath, safeName);
+    if (fs.existsSync(targetPath)) {
+      return cb(new Error("Failas tokiu pavadinimu serveryje jau egzistuoja."));
+    }
     cb(null, true);
   },
 });

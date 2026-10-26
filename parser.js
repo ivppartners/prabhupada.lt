@@ -1,8 +1,13 @@
 const Parser = (file) => {
+    if (!file || typeof file.originalname !== "string" || file.originalname.length > 255) {
+        throw new Error("Neteisingas arba per ilgas failo pavadinimas");
+    }
+
     var extRegex = new RegExp('[^.]+$');
     var extention = file.originalname.match(extRegex);
-    if(extention.length) {
-        var pavadinimas = file.originalname.replace(`.${extention[0]}`, '');
+    var pavadinimas = file.originalname;
+    if (extention && extention.length && file.originalname.includes('.')) {
+        pavadinimas = file.originalname.replace(`.${extention[0]}`, '');
     }
     
     if(!pavadinimas) throw new Error("Nėra failo pavadinimo");
@@ -18,7 +23,8 @@ const Parser = (file) => {
         if(likutis.length) {
             var saltinis = likutis[0];
             var groups = null;
-            var knygaRegex = /(?<knyga>[A-Ža-ž]+[ ]+)+(?<vienas>[0-9]+)?(\.[ ]?)?(?<du>[0-9]+)?(\.[ ]?)?(?<trys>[0-9]+)?/g
+            // Saugus regex be įdėtų kvantorių (+)+, apsaugantis nuo ReDoS
+            var knygaRegex = /(?<knyga>[A-Ža-ž]+(?:[ ]+[A-Ža-ž]+)*)[ ]+(?<vienas>[0-9]+)?(?:\.[ ]?(?<du>[0-9]+))?(?:\.[ ]?(?<trys>[0-9]+))?/g;
             var matches = saltinis.matchAll(knygaRegex); 
             for (const match of matches) {
                 groups = match.groups;
