@@ -321,11 +321,11 @@ const ikelti = asyncHandler(async (req, res) => {
       .send({ message: "Nepavyko nuskaityti failo informacijos" });
   }
 
-  var dataString = record.data ? record.data.toLocaleDateString() : null;
+  var dataString = record.data ? toLocalIsoString(record.data).slice(0, 10) : null;
   var dydis = req.file.size;
-  var failo_data = new Date().toLocaleDateString();
+  var failo_data = toLocalIsoString(new Date()).slice(0, 10);
   logger.info(`Įkeltas failas: ${sanitizeLog(record.failo_pavadinimas)} (IP: ${sanitizeLog(req.ip)})`);
-  res.status(200).json({ ...record, dataString, failo_data, dydis });
+  res.status(200).json({ ...record, data: dataString, dataString, failo_data, dydis });
 });
 
 const importuoti = asyncHandler(async (req, res) => {
@@ -349,7 +349,11 @@ const importuoti = asyncHandler(async (req, res) => {
 
         await queries.iterptiIrasa(record);
         logger.info(`Importuotas failas: ${sanitizeLog(record.failo_pavadinimas)}`);
-        return record;
+        return {
+          ...record,
+          data: record.data ? toLocalIsoString(record.data).slice(0, 10) : null,
+          failo_data: record.failo_data ? toLocalIsoString(record.failo_data).slice(0, 10) : null,
+        };
       })
     );
 
@@ -365,6 +369,25 @@ const naikinti = asyncHandler(async (req, res) => {
     return res.status(400).send({ message: "Neteisingas įrašo ID formatas" });
   }
   try {
+    const record = await queries.gautiIrasaPagalId(req.params.id);
+    if (!record) {
+      logger.error(`Nerado tokio įrašo trynimui: ${sanitizeLog(req.params.id)}`);
+      return res.status(404).send({ message: "Nerado tokio įrašo" });
+    }
+
+    const filePath = resolveSafePath(record.failo_pavadinimas);
+    if (filePath) {
+      try {
+        await fs.unlink(filePath);
+        logger.info(`Failas ištrintas iš failų sistemos: ${sanitizeLog(record.failo_pavadinimas)}`);
+      } catch (fileError) {
+        if (fileError.code !== "ENOENT") {
+          logger.error(fileError);
+          return res.status(500).send({ message: "Nepavyko ištrinti susieto failo iš failų sistemos" });
+        }
+      }
+    }
+
     await queries.istrintiIrasa(req.params.id);
     logger.info(`Įrašas ištrintas: ${sanitizeLog(req.params.id)} (IP: ${sanitizeLog(req.ip)})`);
     res.status(200).send({ message: "Įrašas ištrintas" });
@@ -388,9 +411,10 @@ const parse = asyncHandler(async (req, res) => {
     originalname: record.failo_pavadinimas,
   });
 
-  var dataString = rec.data ? rec.data.toLocaleDateString() : null;
+  var dataString = rec.data ? toLocalIsoString(rec.data).slice(0, 10) : null;
+  var failo_dataString = record.failo_data ? toLocalIsoString(record.failo_data).slice(0, 10) : null;
 
-  res.status(200).json({ ...record, ...rec, dataString });
+  res.status(200).json({ ...record, ...rec, data: dataString, failo_data: failo_dataString, dataString });
 });
 
 const parseFilename = asyncHandler(async (req, res) => {
@@ -402,9 +426,9 @@ const parseFilename = asyncHandler(async (req, res) => {
     originalname: path.basename(req.body.failo_pavadinimas),
   });
 
-  var dataString = rec.data ? rec.data.toLocaleDateString() : null;
+  var dataString = rec.data ? toLocalIsoString(rec.data).slice(0, 10) : null;
 
-  res.status(200).json({ ...rec, dataString });
+  res.status(200).json({ ...rec, data: dataString, dataString });
 });
 
 const sukurti = asyncHandler(async (req, res) => {
